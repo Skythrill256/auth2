@@ -13,7 +13,8 @@ func RunMigrations(db *sql.DB) error {
         google_id VARCHAR(255) UNIQUE,
         github_id BIGINT UNIQUE,
         facebook_id BIGINT UNIQUE,
-        microsoft_id VARCHAR(255) UNIQUE
+        microsoft_id VARCHAR(255) UNIQUE,
+        linkedin_id BIGINT UNIQUE
     )`
 
 	_, err := db.Exec(query)

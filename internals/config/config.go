@@ -32,6 +32,9 @@ type Config struct {
 	MicrosoftClientID     string
 	MicrosoftClientSecret string
 	MicrosoftRedirectURL  string
+	LinkedInClientID      string
+	LinkedInClientSecret  string
+	LinkedInRedirectURL   string
 }
 
 func LoadConfig() *Config {
@@ -65,5 +68,8 @@ func LoadConfig() *Config {
 		MicrosoftClientID:     os.Getenv("MICROSOFT_CLIENT_ID"),
 		MicrosoftClientSecret: os.Getenv("MICROSOFT_CLIENT_SECRET"),
 		MicrosoftRedirectURL:  os.Getenv("MICROSOFT_REDIRECT_URL"),
+		LinkedInClientID:      os.Getenv("LINKEDIN_CLIENT_ID"),
+		LinkedInClientSecret:  os.Getenv("LINKEDIN_CLIENT_SECRET"),
+		LinkedInRedirectURL:   os.Getenv("LINKEDIN_REDIRECT_URL"),
 	}
 }
