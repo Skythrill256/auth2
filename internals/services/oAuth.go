@@ -16,6 +16,7 @@ import (
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
 )
 
@@ -56,6 +57,16 @@ func GetMicrosoftOAuthConfig(cfg *config.Config) *oauth2.Config {
 		RedirectURL:  cfg.MicrosoftRedirectURL,
 		Scopes:       []string{"openid", "profile", "email", "offline_access", "User.Read"},
 		Endpoint:     microsoft.AzureADEndpoint("common"),
+	}
+}
+
+func GetLinkedinOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.LinkedInClientID,
+		ClientSecret: cfg.LinkedInClientSecret,
+		RedirectURL:  cfg.LinkedInRedirectURL,
+		Scopes:       []string{"r_emailaddress", "r_liteprofile"},
+		Endpoint:     linkedin.Endpoint,
 	}
 }
 
@@ -333,6 +344,85 @@ func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string) 
 			MicrosoftID: &microsoftUser.ID,
 		}
 		if err := repository.CreateUser(newUser); err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func LinkedinLogin(cfg *config.Config, repository *db.Repository, code string) (string, error) {
+	oauthConfig := GetLinkedinOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	client := oauthConfig.Client(context.Background(), oauthToken)
+
+	resp, err := client.Get("https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var emailResponse struct {
+		Elements []struct {
+			Handle struct {
+				EmailAddress string `json:"emailAddress"`
+			} `json:"handle~"`
+		} `json:"elements"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&emailResponse); err != nil {
+		return "", err
+	}
+
+	if len(emailResponse.Elements) == 0 {
+		return "", errors.New("failed to get email from LinkedIn response")
+	}
+
+	email := emailResponse.Elements[0].Handle.EmailAddress
+
+	resp, err = client.Get("https://api.linkedin.com/v2/me")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var linkedinUser struct {
+		ID string `json:"id"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&linkedinUser); err != nil {
+		return "", err
+	}
+
+	linkedinID, err := strconv.ParseInt(linkedinUser.ID, 10, 64)
+	if err != nil {
+		return "", err
+	}
+
+	user, err := repository.GetUserByLinkedinID(linkedinID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      email,
+			IsVerified: true,
+			LinkedinID: &linkedinID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
 			return "", err
 		}
 		user = newUser
