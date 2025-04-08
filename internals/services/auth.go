@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -67,7 +68,26 @@ func VerifyEmail(token string, repository *db.Repository, cfg *config.Config) er
 }
 
 func GetUserByID(id string, repository *db.Repository) (*models.User, error) {
-	return repository.GetUserByID(id)
+	user, err := repository.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+}
+
+func UpdateUserProfile(userID int, name, avatar, bio, phoneNumber string, repository *db.Repository) error {
+	user, err := repository.GetUserByID(fmt.Sprint(userID))
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	if user == nil {
+		return errors.New("user not found")
+	}
+	return repository.UpdateProfile(userID, name, avatar, bio, phoneNumber)
 }
 
 func ForgotPassword(email string, repository *db.Repository, cfg *config.Config) error {

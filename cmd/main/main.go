@@ -8,6 +8,7 @@ import (
 	"github.com/Skythrill256/auth-service/internals/db"
 	"github.com/Skythrill256/auth-service/internals/handlers"
 	"github.com/Skythrill256/auth-service/internals/models"
+	"github.com/Skythrill256/auth-service/internals/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -42,6 +43,12 @@ func main() {
 	router.HandleFunc("/forget-password", handler.ForgotPassword).Methods("GET")
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
 	router.HandleFunc("/reset-password", handler.ResetPassword).Methods("GET", "POST")
+
+	// Profile management routes with authentication middleware
+	profileRouter := router.PathPrefix("/profile").Subrouter()
+	profileRouter.Use(utils.AuthMiddleware(cfg.JWTSecret))
+	profileRouter.HandleFunc("", handler.GetProfile).Methods("GET")
+	profileRouter.HandleFunc("", handler.UpdateProfile).Methods("PUT")
 	log.Println("Server is running on port", cfg.AppPort)
 	log.Fatal(http.ListenAndServe(":"+cfg.AppPort, router))
 }

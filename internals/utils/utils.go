@@ -11,6 +11,13 @@ type UserDTO struct {
 	Password string `json:"password"`
 }
 
+type UserProfileDTO struct {
+	Name        string `json:"name"`
+	Avatar      string `json:"avatar,omitempty"`
+	Bio         string `json:"bio,omitempty"`
+	PhoneNumber string `json:"phone_number,omitempty"`
+}
+
 func GenerateJWT(email string, secret string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
