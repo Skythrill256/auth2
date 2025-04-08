@@ -17,3 +17,14 @@ type User struct {
 	MicrosoftID *string   `json:"microsoft_id,omitempty"`
 	LinkedinID  *int64    `json:"linkedin_id,omitempty"`
 }
+
+type UserProfile struct {
+	ID          int       `json:"id"`
+	UserID      int       `json:"user_id"`
+	Name        string    `json:"name"`
+	Avatar      string    `json:"avatar,omitempty"`
+	Bio         string    `json:"bio,omitempty"`
+	PhoneNumber string    `json:"phone_number,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}

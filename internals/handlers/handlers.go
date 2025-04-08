@@ -85,6 +85,52 @@ func (h *Handler) FacebookOAuthConsentRedirect(w http.ResponseWriter, r *http.Re
 	http.Redirect(w, r, services.FacebookOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	userProfile, err := h.Repository.GetUserProfile(user.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(userProfile)
+}
+
+func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	var req utils.UserProfileDTO
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = services.UpdateUserProfile(user.ID, req.Name, req.Avatar, req.Bio, req.PhoneNumber, h.Repository)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Profile updated successfully"})
+}
+
 func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
