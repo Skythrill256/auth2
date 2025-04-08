@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"html/template"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -315,7 +315,7 @@ func (h *Handler) CreateUserExtraInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read the request body
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusBadRequest)
 		return
