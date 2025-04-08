@@ -54,5 +54,20 @@ func RunMigrations(db *sql.DB) error {
     )`
 
 	_, err = db.Exec(extraInfoQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create login_records table
+	loginRecordsQuery := `CREATE TABLE IF NOT EXISTS login_records (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        ip_address VARCHAR(45) NOT NULL,
+        login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`
+
+	_, err = db.Exec(loginRecordsQuery)
 	return err
 }
