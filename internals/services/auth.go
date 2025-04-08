@@ -58,8 +58,7 @@ func LoginUser(user utils.UserDTO, repository *db.Repository, cfg *config.Config
 	// Record the login attempt
 	err = repository.CreateLoginRecord(storedUser.ID, ipAddress)
 	if err != nil {
-		// Log the error but don't fail the login
-		fmt.Printf("Failed to record login: %v\n", err)
+		return "", err
 	}
 
 	return token, nil
