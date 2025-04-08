@@ -67,7 +67,7 @@ func VerifyEmail(token string, repository *db.Repository, cfg *config.Config) er
 	return repository.VerifyUserEmail(email)
 }
 
-func GetUserByID(id string, repository *db.Repository) (*models.User, error) {
+func GetUserByID(id int, repository *db.Repository) (*models.User, error) {
 	user, err := repository.GetUserByID(id)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func GetUserByID(id string, repository *db.Repository) (*models.User, error) {
 }
 
 func UpdateUserProfile(userID int, name, avatar, bio, phoneNumber string, repository *db.Repository) error {
-	user, err := repository.GetUserByID(fmt.Sprint(userID))
+	user, err := repository.GetUserByID(userID)
 	if err != nil {
 		fmt.Println(err)
 		return err

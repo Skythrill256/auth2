@@ -34,7 +34,7 @@ func (repo *Repository) CreateUser(user *models.User) error {
 	return tx.Commit()
 }
 
-func (repo *Repository) GetUserByID(id string) (*models.User, error) {
+func (repo *Repository) GetUserByID(id int) (*models.User, error) {
 	var user models.User
 	query := `SELECT id, email, password, is_verified, created_at, updated_at, google_id, github_id, facebook_id, microsoft_id, linkedin_id FROM users WHERE id=$1`
 	err := repo.DB.QueryRow(query, id).Scan(&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.GoogleID, &user.GithubID, &user.FacebookID, &user.MicrosoftID, &user.LinkedinID)
@@ -176,19 +176,6 @@ func (repo *Repository) GetUserByLinkedinID(linkedinID int64) (*models.User, err
 	var user models.User
 	query := `SELECT id, email, password, is_verified, created_at, updated_at, linkedin_id FROM users WHERE linkedin_id = $1`
 	err := repo.DB.QueryRow(query, linkedinID).Scan(&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.LinkedinID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (repo *Repository) GetUserById(id int) (*models.User, error) {
-	var user models.User
-	query := `SELECT id, email, is_verified, created_at, updated_at, google_id, github_id, facebook_id FROM users WHERE id = $1`
-	err := repo.DB.QueryRow(query, id).Scan(&user.ID, &user.Email, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.GoogleID, &user.GithubID, &user.FacebookID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
