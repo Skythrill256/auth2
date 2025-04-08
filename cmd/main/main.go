@@ -49,6 +49,15 @@ func main() {
 	profileRouter.Use(utils.AuthMiddleware(cfg.JWTSecret))
 	profileRouter.HandleFunc("", handler.GetProfile).Methods("GET")
 	profileRouter.HandleFunc("", handler.UpdateProfile).Methods("PUT")
+
+	// User Extra Info routes with authentication middleware
+	extraInfoRouter := router.PathPrefix("/extra-info").Subrouter()
+	extraInfoRouter.Use(utils.AuthMiddleware(cfg.JWTSecret))
+	extraInfoRouter.HandleFunc("", handler.CreateUserExtraInfo).Methods("POST")
+	extraInfoRouter.HandleFunc("", handler.GetUserExtraInfo).Methods("GET")
+	extraInfoRouter.HandleFunc("", handler.UpdateUserExtraInfo).Methods("PUT")
+	extraInfoRouter.HandleFunc("", handler.DeleteUserExtraInfo).Methods("DELETE")
+
 	log.Println("Server is running on port", cfg.AppPort)
 	log.Fatal(http.ListenAndServe(":"+cfg.AppPort, router))
 }

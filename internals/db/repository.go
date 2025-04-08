@@ -202,3 +202,70 @@ func (repo *Repository) UpdateUserPassword(email string, newPassword string) err
 	}
 	return nil
 }
+
+func (repo *Repository) CreateUserExtraInfo(info *models.UserExtraInfo) error {
+	query := `INSERT INTO user_extra_info (user_id, key, value) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at`
+	err := repo.DB.QueryRow(query, info.UserID, info.Key, info.Value).Scan(&info.ID, &info.CreatedAt, &info.UpdatedAt)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *Repository) GetUserExtraInfo(userID int, key string) (*models.UserExtraInfo, error) {
+	var info models.UserExtraInfo
+	query := `SELECT id, user_id, key, value, created_at, updated_at FROM user_extra_info WHERE user_id = $1 AND key = $2`
+	err := repo.DB.QueryRow(query, userID, key).Scan(&info.ID, &info.UserID, &info.Key, &info.Value, &info.CreatedAt, &info.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &info, nil
+}
+
+func (repo *Repository) GetAllUserExtraInfo(userID int) ([]models.UserExtraInfo, error) {
+	query := `SELECT id, user_id, key, value, created_at, updated_at FROM user_extra_info WHERE user_id = $1`
+	rows, err := repo.DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var infoList []models.UserExtraInfo
+	for rows.Next() {
+		var info models.UserExtraInfo
+		err := rows.Scan(&info.ID, &info.UserID, &info.Key, &info.Value, &info.CreatedAt, &info.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		infoList = append(infoList, info)
+	}
+	return infoList, rows.Err()
+}
+
+func (repo *Repository) UpdateUserExtraInfo(info *models.UserExtraInfo) error {
+	query := `UPDATE user_extra_info SET value = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 AND key = $3 RETURNING id`
+	err := repo.DB.QueryRow(query, info.Value, info.UserID, info.Key).Scan(&info.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *Repository) DeleteUserExtraInfo(userID int, key string) error {
+	query := `DELETE FROM user_extra_info WHERE user_id = $1 AND key = $2`
+	result, err := repo.DB.Exec(query, userID, key)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}

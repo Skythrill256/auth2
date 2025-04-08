@@ -37,5 +37,22 @@ func RunMigrations(db *sql.DB) error {
     )`
 
 	_, err = db.Exec(profileQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create user_extra_info table
+	extraInfoQuery := `CREATE TABLE IF NOT EXISTS user_extra_info (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        key VARCHAR(255) NOT NULL,
+        value TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE(user_id, key)
+    )`
+
+	_, err = db.Exec(extraInfoQuery)
 	return err
 }
