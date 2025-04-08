@@ -501,3 +501,29 @@ func (h *Handler) DeleteUserExtraInfo(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *Handler) GetLoginHistory(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		return
+	}
+
+	loginRecords, err := h.Repository.GetUserLoginHistory(user.ID)
+	if err != nil {
+		http.Error(w, "Failed to get login history", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(loginRecords); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
