@@ -1,13 +1,16 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/Skythrill256/auth-service/internals/config"
 	"github.com/Skythrill256/auth-service/internals/db"
+	"github.com/Skythrill256/auth-service/internals/models"
 	"github.com/Skythrill256/auth-service/internals/services"
 	"github.com/Skythrill256/auth-service/internals/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -127,7 +130,7 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Profile updated successfully"})
 }
@@ -296,4 +299,161 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Password successfully reset"})
 	}
+}
+
+func (h *Handler) CreateUserExtraInfo(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Read the request body
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		return
+	}
+
+	// Try to decode as array first
+	var reqArray []utils.UserExtraInfoDTO
+	if err := json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&reqArray); err != nil {
+		// If not an array, try single object
+		var req utils.UserExtraInfoDTO
+		if err := json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		reqArray = []utils.UserExtraInfoDTO{req}
+	}
+
+	// Create slice to store all info objects
+	infos := make([]*models.UserExtraInfo, len(reqArray))
+	for i, req := range reqArray {
+		infos[i] = &models.UserExtraInfo{
+			UserID: user.ID,
+			Key:    req.Key,
+			Value:  req.Value,
+		}
+	}
+
+	// Create all records in a transaction
+	for _, info := range infos {
+		if err := h.Repository.CreateUserExtraInfo(info); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(infos)
+}
+
+func (h *Handler) GetUserExtraInfo(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		// If no key is provided, return all extra info
+		infoList, err := h.Repository.GetAllUserExtraInfo(user.ID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(infoList)
+		return
+	}
+
+	// If key is provided, return specific info
+	info, err := h.Repository.GetUserExtraInfo(user.ID, key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if info == nil {
+		http.Error(w, "Info not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
+
+func (h *Handler) UpdateUserExtraInfo(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var req utils.UserExtraInfoDTO
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	info := &models.UserExtraInfo{
+		UserID: user.ID,
+		Key:    req.Key,
+		Value:  req.Value,
+	}
+
+	if err := h.Repository.UpdateUserExtraInfo(info); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
+
+func (h *Handler) DeleteUserExtraInfo(w http.ResponseWriter, r *http.Request) {
+	email, ok := utils.GetUserEmailFromContext(r.Context())
+	if !ok || email == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.Repository.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		http.Error(w, "Key is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Repository.DeleteUserExtraInfo(user.ID, key); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

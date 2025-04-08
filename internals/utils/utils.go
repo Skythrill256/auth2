@@ -18,6 +18,11 @@ type UserProfileDTO struct {
 	PhoneNumber string `json:"phone_number,omitempty"`
 }
 
+type UserExtraInfoDTO struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 func GenerateJWT(email string, secret string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
