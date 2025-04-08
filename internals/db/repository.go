@@ -275,3 +275,26 @@ func (repo *Repository) DeleteUserExtraInfo(userID int, key string) error {
 	}
 	return nil
 }
+
+func (repo *Repository) GetUserLoginHistory(userID int) ([]models.LoginRecord, error) {
+	query := `SELECT id, user_id, ip_address, login_time, created_at FROM login_records 
+	         WHERE user_id = $1 ORDER BY login_time DESC`
+
+	rows, err := repo.DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var records []models.LoginRecord
+	for rows.Next() {
+		var record models.LoginRecord
+		err := rows.Scan(&record.ID, &record.UserID, &record.IPAddress, &record.LoginTime, &record.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, record)
+	}
+
+	return records, nil
+}

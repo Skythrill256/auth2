@@ -58,6 +58,11 @@ func main() {
 	extraInfoRouter.HandleFunc("", handler.UpdateUserExtraInfo).Methods("PUT")
 	extraInfoRouter.HandleFunc("", handler.DeleteUserExtraInfo).Methods("DELETE")
 
+	// Login History routes with authentication middleware
+	loginHistoryRouter := router.PathPrefix("/login-history").Subrouter()
+	loginHistoryRouter.Use(utils.AuthMiddleware(cfg.JWTSecret))
+	loginHistoryRouter.HandleFunc("", handler.GetLoginHistory).Methods("GET")
+
 	log.Println("Server is running on port", cfg.AppPort)
 	log.Fatal(http.ListenAndServe(":"+cfg.AppPort, router))
 }
