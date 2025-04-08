@@ -51,13 +51,22 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
-	token, err := services.LoginUser(userDTO, h.Repository, h.Config)
+
+	// Get the client's IP address
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+
+	token, err := services.LoginUser(userDTO, h.Repository, h.Config, ipAddress)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"token:": token})
-
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
 func (h *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +150,14 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
-	token, err := services.GoogleLogin(h.Config, h.Repository, code)
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	token, err := services.GoogleLogin(h.Config, h.Repository, code, ipAddress)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -155,7 +171,14 @@ func (h *Handler) GithubLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
-	token, err := services.GithubLogin(h.Config, h.Repository, code)
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	token, err := services.GithubLogin(h.Config, h.Repository, code, ipAddress)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -169,7 +192,14 @@ func (h *Handler) FacebookLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
-	token, err := services.FacebookLogin(h.Config, h.Repository, code)
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	token, err := services.FacebookLogin(h.Config, h.Repository, code, ipAddress)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -183,7 +213,14 @@ func (h *Handler) MicrosoftLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
-	token, err := services.MicrosoftLogin(h.Config, h.Repository, code)
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	token, err := services.MicrosoftLogin(h.Config, h.Repository, code, ipAddress)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -197,7 +234,14 @@ func (h *Handler) LinkedinLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
-	token, err := services.LinkedinLogin(h.Config, h.Repository, code)
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	token, err := services.LinkedinLogin(h.Config, h.Repository, code, ipAddress)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

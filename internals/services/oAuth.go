@@ -88,7 +88,7 @@ func FacebookOAuthConsentURL(cfg *config.Config) string {
 	return oauthConfig.AuthCodeURL("state")
 }
 
-func GoogleLogin(cfg *config.Config, repository *db.Repository, code string) (string, error) {
+func GoogleLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetGoogleOAuthConfig(cfg)
 
 	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
@@ -136,6 +136,12 @@ func GoogleLogin(cfg *config.Config, repository *db.Repository, code string) (st
 		user = newUser
 	}
 
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
 	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
 	if err != nil {
 		return "", err
@@ -144,7 +150,7 @@ func GoogleLogin(cfg *config.Config, repository *db.Repository, code string) (st
 	return jwtToken, nil
 }
 
-func GithubLogin(cfg *config.Config, repository *db.Repository, code string) (string, error) {
+func GithubLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetGithubOAuthConfig(cfg)
 
 	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
@@ -216,6 +222,12 @@ func GithubLogin(cfg *config.Config, repository *db.Repository, code string) (st
 		user = newUser
 	}
 
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
 	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
 	if err != nil {
 		return "", err
@@ -224,7 +236,7 @@ func GithubLogin(cfg *config.Config, repository *db.Repository, code string) (st
 	return jwtToken, nil
 }
 
-func FacebookLogin(cfg *config.Config, repository *db.Repository, code string) (string, error) {
+func FacebookLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetFacebookOAuthConfig(cfg)
 
 	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
@@ -280,6 +292,12 @@ func FacebookLogin(cfg *config.Config, repository *db.Repository, code string) (
 		user = newUser
 	}
 
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
 	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
 	if err != nil {
 		return "", err
@@ -288,7 +306,7 @@ func FacebookLogin(cfg *config.Config, repository *db.Repository, code string) (
 	return jwtToken, nil
 }
 
-func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string) (string, error) {
+func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetMicrosoftOAuthConfig(cfg)
 
 	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
@@ -349,6 +367,12 @@ func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string) 
 		user = newUser
 	}
 
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
 	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
 	if err != nil {
 		return "", err
@@ -357,7 +381,7 @@ func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string) 
 	return jwtToken, nil
 }
 
-func LinkedinLogin(cfg *config.Config, repository *db.Repository, code string) (string, error) {
+func LinkedinLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetLinkedinOAuthConfig(cfg)
 
 	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
@@ -426,6 +450,12 @@ func LinkedinLogin(cfg *config.Config, repository *db.Repository, code string) (
 			return "", err
 		}
 		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
 	}
 
 	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)

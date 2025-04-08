@@ -89,6 +89,12 @@ func (repo *Repository) VerifyUserEmail(email string) error {
 	return nil
 }
 
+func (repo *Repository) CreateLoginRecord(userID int, ipAddress string) error {
+	query := `INSERT INTO login_records (user_id, ip_address) VALUES ($1, $2)`
+	_, err := repo.DB.Exec(query, userID, ipAddress)
+	return err
+}
+
 func (repo *Repository) GetUserByGoogleID(googleID string) (*models.User, error) {
 	var user models.User
 	query := `SELECT id, email, password, is_verified, created_at, updated_at, google_id

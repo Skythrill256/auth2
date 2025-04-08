@@ -33,7 +33,7 @@ func SignUpUser(user utils.UserDTO, repository *db.Repository, cfg *config.Confi
 	return utils.SendVerificationEmail(user.Email, verificationToken, cfg)
 }
 
-func LoginUser(user utils.UserDTO, repository *db.Repository, cfg *config.Config) (string, error) {
+func LoginUser(user utils.UserDTO, repository *db.Repository, cfg *config.Config, ipAddress string) (string, error) {
 	storedUser, err := repository.GetUserByEmail(user.Email)
 	if err != nil {
 		return "", err
@@ -53,6 +53,13 @@ func LoginUser(user utils.UserDTO, repository *db.Repository, cfg *config.Config
 	token, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
 	if err != nil {
 		return "", err
+	}
+
+	// Record the login attempt
+	err = repository.CreateLoginRecord(storedUser.ID, ipAddress)
+	if err != nil {
+		// Log the error but don't fail the login
+		fmt.Printf("Failed to record login: %v\n", err)
 	}
 
 	return token, nil
