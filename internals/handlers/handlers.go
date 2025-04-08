@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"strconv"
 
 	"github.com/Skythrill256/auth-service/internals/config"
 	"github.com/Skythrill256/auth-service/internals/db"
@@ -206,7 +207,12 @@ func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		http.Error(w, "Id is required", http.StatusBadRequest)
 	}
-	user, err := services.GetUserByID(id, h.Repository)
+	userId, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+	user, err := services.GetUserByID(userId, h.Repository)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
