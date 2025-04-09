@@ -101,6 +101,11 @@ func AmazonOAuthConsentURL(cfg *config.Config) string {
 	return oauthConfig.AuthCodeURL("state")
 }
 
+func BitbucketOAuthConsentURL(cfg *config.Config) string {
+	oauthConfig := GetBitbucketOAuthConfig(cfg)
+	return oauthConfig.AuthCodeURL("state")
+}
+
 func GoogleLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetGoogleOAuthConfig(cfg)
 
