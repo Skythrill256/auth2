@@ -32,17 +32,24 @@ func main() {
 	router.HandleFunc("/signup", handler.SignUpUser).Methods("POST")
 	router.HandleFunc("/login", handler.Login).Methods("POST")
 	router.HandleFunc("/verify-email", handler.VerifyEmail).Methods("GET")
+	router.HandleFunc("/forget-password", handler.ForgotPassword).Methods("GET")
+	router.HandleFunc("/reset-password", handler.ResetPassword).Methods("GET", "POST")
+
 	router.HandleFunc("/auth/google", handler.GoogleOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/google/callback", handler.GoogleLogin).Methods("GET")
+
 	router.HandleFunc("/auth/github", handler.GithubOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/github/callback", handler.GithubLogin).Methods("GET")
+
 	router.HandleFunc("/auth/facebook", handler.FacebookOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/facebook/callback", handler.FacebookLogin).Methods("GET")
+
+	router.HandleFunc("/auth/microsoft", handler.MicrosoftOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/microsoft/callback", handler.MicrosoftLogin).Methods("GET")
+
 	router.HandleFunc("/auth/linkedin/callback", handler.LinkedinLogin).Methods("GET")
-	router.HandleFunc("/forget-password", handler.ForgotPassword).Methods("GET")
+
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
-	router.HandleFunc("/reset-password", handler.ResetPassword).Methods("GET", "POST")
 
 	// Profile management routes with authentication middleware
 	profileRouter := router.PathPrefix("/profile").Subrouter()

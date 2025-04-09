@@ -98,6 +98,10 @@ func (h *Handler) FacebookOAuthConsentRedirect(w http.ResponseWriter, r *http.Re
 	http.Redirect(w, r, services.FacebookOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) MicrosoftOAuthConsentRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, services.MicrosoftOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
+}
+
 func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	email, ok := utils.GetUserEmailFromContext(r.Context())
 	if !ok || email == "" {
