@@ -1,0 +1,34 @@
+name: Auto Label Apertre PRs
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  label-apertre:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add label if "Apertre" or "Apertre 2.0" is mentioned
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prBody = context.payload.pull_request.body || "";
+            const issue_number = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const matches = prBody.match(/Apertre\s*2\.?0?|Apertre/i);
+
+            if (matches) {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: ['apertre2.0']
+              });
+              console.log('Label "apertre2.0" added to PR #' + issue_number);
+            } else {
+              console.log('No Apertre mention found in PR body.');
+            }

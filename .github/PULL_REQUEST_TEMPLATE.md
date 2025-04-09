@@ -53,3 +53,9 @@ Closes #
 
 <!-- Anything else the reviewer should know -->
 
+### Open Source Event
+
+<!-- If you are participating in an open source event, please fill out the following information. -->
+
+- Event Name:
+- Event Site:
