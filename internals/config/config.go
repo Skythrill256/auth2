@@ -35,6 +35,9 @@ type Config struct {
 	LinkedInClientID      string
 	LinkedInClientSecret  string
 	LinkedInRedirectURL   string
+	AmazonClientID        string
+	AmazonClientSecret    string
+	AmazonRedirectURL     string
 }
 
 func LoadConfig() *Config {
@@ -71,5 +74,8 @@ func LoadConfig() *Config {
 		LinkedInClientID:      os.Getenv("LINKEDIN_CLIENT_ID"),
 		LinkedInClientSecret:  os.Getenv("LINKEDIN_CLIENT_SECRET"),
 		LinkedInRedirectURL:   os.Getenv("LINKEDIN_REDIRECT_URL"),
+		AmazonClientID:        os.Getenv("AMAZON_CLIENT_ID"),
+		AmazonClientSecret:    os.Getenv("AMAZON_CLIENT_SECRET"),
+		AmazonRedirectURL:     os.Getenv("AMAZON_REDIRECT_URL"),
 	}
 }

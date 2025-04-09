@@ -16,6 +16,7 @@ type User struct {
 	FacebookID  *int64    `json:"facebook_id,omitempty"`
 	MicrosoftID *string   `json:"microsoft_id,omitempty"`
 	LinkedinID  *int64    `json:"linkedin_id,omitempty"`
+	AmazonID    *string   `json:"amazon_id,omitempty"`
 }
 
 type UserProfile struct {
