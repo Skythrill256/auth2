@@ -38,6 +38,9 @@ type Config struct {
 	AmazonClientID        string
 	AmazonClientSecret    string
 	AmazonRedirectURL     string
+	BitbucketClientID     string
+	BitbucketClientSecret string
+	BitbucketRedirectURL  string
 }
 
 func LoadConfig() *Config {
@@ -77,5 +80,8 @@ func LoadConfig() *Config {
 		AmazonClientID:        os.Getenv("AMAZON_CLIENT_ID"),
 		AmazonClientSecret:    os.Getenv("AMAZON_CLIENT_SECRET"),
 		AmazonRedirectURL:     os.Getenv("AMAZON_REDIRECT_URL"),
+		BitbucketClientID:     os.Getenv("BITBUCKET_CLIENT_ID"),
+		BitbucketClientSecret: os.Getenv("BITBUCKET_CLIENT_SECRET"),
+		BitbucketRedirectURL:  os.Getenv("BITBUCKET_REDIRECT_URL"),
 	}
 }

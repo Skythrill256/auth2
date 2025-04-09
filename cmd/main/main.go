@@ -53,6 +53,8 @@ func main() {
 	router.HandleFunc("/auth/amazon", handler.AmazonOAuthConsentURL).Methods("GET")
 	router.HandleFunc("/auth/amazon/callback", handler.AmazonLogin).Methods("GET")
 
+	router.HandleFunc("/auth/bitbucket/callback", handler.BitbucketLogin).Methods("GET")
+
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
 
 	// Profile management routes with authentication middleware

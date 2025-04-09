@@ -15,7 +15,9 @@ func RunMigrations(db *sql.DB) error {
         github_id BIGINT UNIQUE,
         facebook_id BIGINT UNIQUE,
         microsoft_id VARCHAR(255) UNIQUE,
-        linkedin_id BIGINT UNIQUE
+        linkedin_id BIGINT UNIQUE,
+        amazon_id VARCHAR(255) UNIQUE,
+        bitbucket_id VARCHAR(255) UNIQUE
     )`
 
 	_, err := db.Exec(usersQuery)
