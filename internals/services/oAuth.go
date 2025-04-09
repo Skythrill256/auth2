@@ -88,6 +88,11 @@ func FacebookOAuthConsentURL(cfg *config.Config) string {
 	return oauthConfig.AuthCodeURL("state")
 }
 
+func MicrosoftOAuthConsentURL(cfg *config.Config) string {
+	oauthConfig := GetMicrosoftOAuthConfig(cfg)
+	return oauthConfig.AuthCodeURL("state")
+}
+
 func GoogleLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetGoogleOAuthConfig(cfg)
 
