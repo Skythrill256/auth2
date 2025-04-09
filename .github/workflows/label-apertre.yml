@@ -4,11 +4,7 @@ on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
 
-permissions:
-  contents: 'read'
-  id-token: 'write'
-  issues: 'write'
-  pull-requests: write
+permissions: write-all
 
 jobs:
   label-apertre:
