@@ -106,6 +106,27 @@ func (h *Handler) LinkedinOAuthConsentRedirect(w http.ResponseWriter, r *http.Re
 	http.Redirect(w, r, services.LinkedinOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) AmazonLogin(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Code is required", http.StatusBadRequest)
+		return
+	}
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+	token, err := services.AmazonLogin(h.Config, h.Repository, code, ipAddress)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
 func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	email, ok := utils.GetUserEmailFromContext(r.Context())
 	if !ok || email == "" {

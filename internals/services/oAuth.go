@@ -13,6 +13,7 @@ import (
 	"github.com/Skythrill256/auth-service/internals/models"
 	"github.com/Skythrill256/auth-service/internals/utils"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/amazon"
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -373,6 +374,79 @@ func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string, 
 			MicrosoftID: &microsoftUser.ID,
 		}
 		if err := repository.CreateUser(newUser); err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func GetAmazonOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.AmazonClientID,
+		ClientSecret: cfg.AmazonClientSecret,
+		RedirectURL:  cfg.AmazonRedirectURL,
+		Scopes:       []string{"profile"}, // Basic profile information
+		Endpoint:     amazon.Endpoint,
+	}
+}
+
+func AmazonLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetAmazonOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	client := oauthConfig.Client(context.Background(), oauthToken)
+
+	// Get user profile from Amazon
+	resp, err := client.Get("https://api.amazon.com/user/profile")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var amazonUser struct {
+		UserID string `json:"user_id"`
+		Email  string `json:"email"`
+		Name   string `json:"name"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&amazonUser); err != nil {
+		return "", err
+	}
+
+	if amazonUser.Email == "" {
+		return "", errors.New("failed to get email from Amazon response")
+	}
+
+	user, err := repository.GetUserByAmazonID(amazonUser.UserID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      amazonUser.Email,
+			IsVerified: true,
+			AmazonID:   &amazonUser.UserID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
 			return "", err
 		}
 		user = newUser
