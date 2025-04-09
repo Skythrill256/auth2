@@ -467,6 +467,109 @@ func AmazonLogin(cfg *config.Config, repository *db.Repository, code string, ipA
 	return jwtToken, nil
 }
 
+func GetBitbucketOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.BitbucketClientID,
+		ClientSecret: cfg.BitbucketClientSecret,
+		RedirectURL:  cfg.BitbucketRedirectURL,
+		Scopes:       []string{"account", "email"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://bitbucket.org/site/oauth2/authorize",
+			TokenURL: "https://bitbucket.org/site/oauth2/access_token",
+		},
+	}
+}
+
+func BitbucketLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetBitbucketOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	client := oauthConfig.Client(context.Background(), oauthToken)
+
+	// Get user profile from Bitbucket
+	resp, err := client.Get("https://api.bitbucket.org/2.0/user")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var bitbucketUser struct {
+		UUID        string `json:"uuid"`
+		Username    string `json:"username"`
+		AccountID   string `json:"account_id"`
+		DisplayName string `json:"display_name"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&bitbucketUser); err != nil {
+		return "", err
+	}
+
+	// Get user email from Bitbucket
+	resp, err = client.Get("https://api.bitbucket.org/2.0/user/emails")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var emailResponse struct {
+		Values []struct {
+			Email     string `json:"email"`
+			IsPrimary bool   `json:"is_primary"`
+		} `json:"values"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&emailResponse); err != nil {
+		return "", err
+	}
+
+	var email string
+	for _, e := range emailResponse.Values {
+		if e.IsPrimary {
+			email = e.Email
+			break
+		}
+	}
+
+	if email == "" {
+		return "", errors.New("failed to get email from Bitbucket response")
+	}
+
+	user, err := repository.GetUserByBitbucketID(bitbucketUser.UUID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:       email,
+			IsVerified:  true,
+			BitbucketID: &bitbucketUser.UUID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
 func LinkedinLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetLinkedinOAuthConfig(cfg)
 
