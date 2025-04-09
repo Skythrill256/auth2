@@ -47,6 +47,7 @@ func main() {
 	router.HandleFunc("/auth/microsoft", handler.MicrosoftOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/microsoft/callback", handler.MicrosoftLogin).Methods("GET")
 
+	router.HandleFunc("/auth/linkedin", handler.LinkedinOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/linkedin/callback", handler.LinkedinLogin).Methods("GET")
 
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")

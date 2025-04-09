@@ -102,6 +102,10 @@ func (h *Handler) MicrosoftOAuthConsentRedirect(w http.ResponseWriter, r *http.R
 	http.Redirect(w, r, services.MicrosoftOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) LinkedinOAuthConsentRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, services.LinkedinOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
+}
+
 func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	email, ok := utils.GetUserEmailFromContext(r.Context())
 	if !ok || email == "" {
