@@ -73,19 +73,16 @@ func GetLinkedinOAuthConfig(cfg *config.Config) *oauth2.Config {
 
 func GoogleOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetGoogleOAuthConfig(cfg)
-
 	return oauthConfig.AuthCodeURL("state")
 }
 
 func GithubOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetGithubOAuthConfig(cfg)
-
 	return oauthConfig.AuthCodeURL("state")
 }
 
 func FacebookOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetFacebookOAuthConfig(cfg)
-
 	return oauthConfig.AuthCodeURL("state")
 }
 
@@ -96,7 +93,11 @@ func MicrosoftOAuthConsentURL(cfg *config.Config) string {
 
 func LinkedinOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetLinkedinOAuthConfig(cfg)
+	return oauthConfig.AuthCodeURL("state")
+}
 
+func AmazonOAuthConsentURL(cfg *config.Config) string {
+	oauthConfig := GetAmazonOAuthConfig(cfg)
 	return oauthConfig.AuthCodeURL("state")
 }
 

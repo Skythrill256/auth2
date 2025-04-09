@@ -106,6 +106,10 @@ func (h *Handler) LinkedinOAuthConsentRedirect(w http.ResponseWriter, r *http.Re
 	http.Redirect(w, r, services.LinkedinOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) AmazonOAuthConsentURL(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, services.AmazonOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
+}
+
 func (h *Handler) AmazonLogin(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
