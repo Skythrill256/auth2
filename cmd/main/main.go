@@ -62,6 +62,7 @@ func main() {
 	router.HandleFunc("/auth/gitlab", handler.GitLabOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/gitlab/callback", handler.GitLabLogin).Methods("GET")
 
+	router.HandleFunc("/auth/heroku", handler.HerokuOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/heroku/callback", handler.HerokuLogin).Methods("GET")
 
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")

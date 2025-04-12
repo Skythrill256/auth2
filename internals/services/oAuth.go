@@ -170,6 +170,11 @@ func GitLabOAuthConsentURL(cfg *config.Config) string {
 	return oauthConfig.AuthCodeURL("state")
 }
 
+func HerokuOAuthConsentURL(cfg *config.Config) string {
+	oauthConfig := GetHerokuOAuthConfig(cfg)
+	return oauthConfig.AuthCodeURL("state")
+}
+
 func FoursquareLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetFoursquareOAuthConfig(cfg)
 
