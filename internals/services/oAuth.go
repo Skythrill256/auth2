@@ -18,6 +18,7 @@ import (
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/foursquare"
 	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/gitlab"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
@@ -100,6 +101,16 @@ func GetFoursquareOAuthConfig(cfg *config.Config) *oauth2.Config {
 		RedirectURL:  cfg.FoursquareRedirectURL,
 		Scopes:       []string{},
 		Endpoint:     foursquare.Endpoint,
+	}
+}
+
+func GetGitLabOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.GitLabClientID,
+		ClientSecret: cfg.GitLabClientSecret,
+		RedirectURL:  cfg.GitLabRedirectURL,
+		Scopes:       []string{"read_user", "email"},
+		Endpoint:     gitlab.Endpoint,
 	}
 }
 
@@ -720,6 +731,67 @@ func LinkedinLogin(cfg *config.Config, repository *db.Repository, code string, i
 			Email:      email,
 			IsVerified: true,
 			LinkedinID: &linkedinID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func GitLabLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetGitLabOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	client := oauthConfig.Client(context.Background(), oauthToken)
+
+	resp, err := client.Get("https://gitlab.com/api/v4/user")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var gitlabUser struct {
+		ID    int64  `json:"id"`
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&gitlabUser); err != nil {
+		return "", err
+	}
+
+	if gitlabUser.Email == "" {
+		return "", errors.New("failed to get email from GitLab response")
+	}
+
+	user, err := repository.GetUserByGitLabID(gitlabUser.ID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      gitlabUser.Email,
+			IsVerified: true,
+			GitLabID:   &gitlabUser.ID,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {
