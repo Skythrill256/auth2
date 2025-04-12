@@ -138,6 +138,11 @@ func BitbucketOAuthConsentURL(cfg *config.Config) string {
 	return oauthConfig.AuthCodeURL("state")
 }
 
+func FoursquareOAuthConsentURL(cfg *config.Config) string {
+	oauthConfig := GetFoursquareOAuthConfig(cfg)
+	return oauthConfig.AuthCodeURL("state")
+}
+
 func FoursquareLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetFoursquareOAuthConfig(cfg)
 
