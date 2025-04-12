@@ -53,6 +53,9 @@ type Config struct {
 	InstagramClientID      string
 	InstagramClientSecret  string
 	InstagramRedirectURL   string
+	JiraClientID           string
+	JiraClientSecret       string
+	JiraRedirectURL        string
 }
 
 func LoadConfig() *Config {
@@ -107,5 +110,8 @@ func LoadConfig() *Config {
 		InstagramClientID:      os.Getenv("INSTAGRAM_CLIENT_ID"),
 		InstagramClientSecret:  os.Getenv("INSTAGRAM_CLIENT_SECRET"),
 		InstagramRedirectURL:   os.Getenv("INSTAGRAM_REDIRECT_URL"),
+		JiraClientID:           os.Getenv("JIRA_CLIENT_ID"),
+		JiraClientSecret:       os.Getenv("JIRA_CLIENT_SECRET"),
+		JiraRedirectURL:        os.Getenv("JIRA_REDIRECT_URL"),
 	}
 }
