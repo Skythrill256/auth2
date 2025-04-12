@@ -50,6 +50,9 @@ type Config struct {
 	HerokuClientID         string
 	HerokuClientSecret     string
 	HerokuRedirectURL      string
+	InstagramClientID      string
+	InstagramClientSecret  string
+	InstagramRedirectURL   string
 }
 
 func LoadConfig() *Config {
@@ -101,5 +104,8 @@ func LoadConfig() *Config {
 		HerokuClientID:         os.Getenv("HEROKU_CLIENT_ID"),
 		HerokuClientSecret:     os.Getenv("HEROKU_CLIENT_SECRET"),
 		HerokuRedirectURL:      os.Getenv("HEROKU_REDIRECT_URL"),
+		InstagramClientID:      os.Getenv("INSTAGRAM_CLIENT_ID"),
+		InstagramClientSecret:  os.Getenv("INSTAGRAM_CLIENT_SECRET"),
+		InstagramRedirectURL:   os.Getenv("INSTAGRAM_REDIRECT_URL"),
 	}
 }
