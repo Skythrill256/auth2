@@ -136,6 +136,19 @@ func GetInstagramOAuthConfig(cfg *config.Config) *oauth2.Config {
 	}
 }
 
+func GetJiraOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.JiraClientID,
+		ClientSecret: cfg.JiraClientSecret,
+		RedirectURL:  cfg.JiraRedirectURL,
+		Scopes:       []string{"read:jira-user"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://auth.atlassian.com/authorize",
+			TokenURL: "https://auth.atlassian.com/oauth/token",
+		},
+	}
+}
+
 func GoogleOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetGoogleOAuthConfig(cfg)
 	return oauthConfig.AuthCodeURL("state")
@@ -954,6 +967,68 @@ func InstagramLogin(cfg *config.Config, repository *db.Repository, code string, 
 			Email:       instagramUser.Username + "@instagram.com",
 			IsVerified:  true,
 			InstagramID: &instagramUser.ID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func JiraLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetJiraOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	client := oauthConfig.Client(context.Background(), oauthToken)
+
+	// Get user info from Jira API
+	resp, err := client.Get("https://api.atlassian.com/me")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var jiraUser struct {
+		AccountID string `json:"account_id"`
+		Email     string `json:"email"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&jiraUser); err != nil {
+		return "", err
+	}
+
+	if jiraUser.Email == "" {
+		return "", errors.New("failed to get email from Jira response")
+	}
+
+	user, err := repository.GetUserByJiraID(jiraUser.AccountID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      jiraUser.Email,
+			IsVerified: true,
+			JiraID:     &jiraUser.AccountID,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {

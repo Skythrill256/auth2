@@ -68,6 +68,8 @@ func main() {
 	router.HandleFunc("/auth/instagram", handler.InstagramOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/instagram/callback", handler.InstagramLogin).Methods("GET")
 
+	router.HandleFunc("/auth/jira/callback", handler.JiraLogin).Methods("GET")
+
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
 
 	// Profile management routes with authentication middleware

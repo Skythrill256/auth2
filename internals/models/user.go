@@ -22,6 +22,7 @@ type User struct {
 	FoursquareID *string   `json:"foursquare_id,omitempty"`
 	HerokuID     *string   `json:"heroku_id,omitempty"`
 	InstagramID  *string   `json:"instagram_id,omitempty"`
+	JiraID       *string   `json:"jira_id,omitempty"`
 }
 
 type UserProfile struct {
