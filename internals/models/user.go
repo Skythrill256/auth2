@@ -20,6 +20,7 @@ type User struct {
 	AmazonID     *string   `json:"amazon_id,omitempty"`
 	BitbucketID  *string   `json:"bitbucket_id,omitempty"`
 	FoursquareID *string   `json:"foursquare_id,omitempty"`
+	HerokuID     *string   `json:"heroku_id,omitempty"`
 }
 
 type UserProfile struct {

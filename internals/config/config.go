@@ -47,6 +47,9 @@ type Config struct {
 	FoursquareClientID     string
 	FoursquareClientSecret string
 	FoursquareRedirectURL  string
+	HerokuClientID         string
+	HerokuClientSecret     string
+	HerokuRedirectURL      string
 }
 
 func LoadConfig() *Config {
@@ -95,5 +98,8 @@ func LoadConfig() *Config {
 		FoursquareClientID:     os.Getenv("FOURSQUARE_CLIENT_ID"),
 		FoursquareClientSecret: os.Getenv("FOURSQUARE_CLIENT_SECRET"),
 		FoursquareRedirectURL:  os.Getenv("FOURSQUARE_REDIRECT_URL"),
+		HerokuClientID:         os.Getenv("HEROKU_CLIENT_ID"),
+		HerokuClientSecret:     os.Getenv("HEROKU_CLIENT_SECRET"),
+		HerokuRedirectURL:      os.Getenv("HEROKU_REDIRECT_URL"),
 	}
 }
