@@ -56,6 +56,7 @@ func main() {
 	router.HandleFunc("/auth/bitbucket", handler.BitbucketOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/bitbucket/callback", handler.BitbucketLogin).Methods("GET")
 
+	router.HandleFunc("/auth/foursquare", handler.FoursquareOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/foursquare/callback", handler.FoursquareLogin).Methods("GET")
 
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
