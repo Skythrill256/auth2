@@ -26,6 +26,9 @@ type Config struct {
 	GithubClientID         string
 	GithubClientSecret     string
 	GithubRedirectURL      string
+	GitLabClientID         string
+	GitLabClientSecret     string
+	GitLabRedirectURL      string
 	FacebookClientID       string
 	FacebookClientSecret   string
 	FacebookRedirectURL    string
@@ -71,6 +74,9 @@ func LoadConfig() *Config {
 		GithubClientID:         os.Getenv("GITHUB_CLIENT_ID"),
 		GithubClientSecret:     os.Getenv("GITHUB_CLIENT_SECRET"),
 		GithubRedirectURL:      os.Getenv("GITHUB_REDIRECT_URL"),
+		GitLabClientID:         os.Getenv("GITLAB_CLIENT_ID"),
+		GitLabClientSecret:     os.Getenv("GITLAB_CLIENT_SECRET"),
+		GitLabRedirectURL:      os.Getenv("GITLAB_REDIRECT_URL"),
 		FacebookClientID:       os.Getenv("FACEBOOK_CLIENT_ID"),
 		FacebookClientSecret:   os.Getenv("FACEBOOK_CLIENT_SECRET"),
 		FacebookRedirectURL:    os.Getenv("FACEBOOK_REDIRECT_URL"),
