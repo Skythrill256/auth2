@@ -59,6 +59,7 @@ func main() {
 	router.HandleFunc("/auth/foursquare", handler.FoursquareOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/foursquare/callback", handler.FoursquareLogin).Methods("GET")
 
+	router.HandleFunc("/auth/gitlab", handler.GitLabOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/gitlab/callback", handler.GitLabLogin).Methods("GET")
 
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
