@@ -22,10 +22,10 @@ func (repo *Repository) CreateUser(user *models.User) error {
 	}
 
 	// Insert into users table
-	query := `INSERT INTO users (email, password, is_verified, google_id, github_id, gitlab_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id, foursquare_id) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`
+	query := `INSERT INTO users (email, password, is_verified, google_id, github_id, gitlab_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id, foursquare_id, heroku_id) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`
 	err = tx.QueryRow(query, user.Email, user.Password, user.IsVerified,
-		user.GoogleID, user.GithubID, user.GitLabID, user.FacebookID, user.MicrosoftID, user.LinkedinID, user.AmazonID, user.BitbucketID, user.FoursquareID).Scan(&user.ID)
+		user.GoogleID, user.GithubID, user.GitLabID, user.FacebookID, user.MicrosoftID, user.LinkedinID, user.AmazonID, user.BitbucketID, user.FoursquareID, user.HerokuID).Scan(&user.ID)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -242,6 +242,22 @@ func (repo *Repository) GetUserByGitLabID(gitlabID int64) (*models.User, error) 
 
 	err := repo.DB.QueryRow(query, gitlabID).Scan(
 		&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.GitLabID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (repo *Repository) GetUserByHerokuID(herokuID string) (*models.User, error) {
+	var user models.User
+	query := `SELECT id, email, password, is_verified, created_at, updated_at, heroku_id
+	FROM users WHERE heroku_id = $1`
+
+	err := repo.DB.QueryRow(query, herokuID).Scan(
+		&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.HerokuID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

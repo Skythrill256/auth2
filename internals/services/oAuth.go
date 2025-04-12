@@ -20,6 +20,7 @@ import (
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/gitlab"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/heroku"
 	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
 )
@@ -111,6 +112,16 @@ func GetGitLabOAuthConfig(cfg *config.Config) *oauth2.Config {
 		RedirectURL:  cfg.GitLabRedirectURL,
 		Scopes:       []string{"read_user", "email"},
 		Endpoint:     gitlab.Endpoint,
+	}
+}
+
+func GetHerokuOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.HerokuClientID,
+		ClientSecret: cfg.HerokuClientSecret,
+		RedirectURL:  cfg.HerokuRedirectURL,
+		Scopes:       []string{"global"},
+		Endpoint:     heroku.Endpoint,
 	}
 }
 
@@ -797,6 +808,71 @@ func GitLabLogin(cfg *config.Config, repository *db.Repository, code string, ipA
 			Email:      gitlabUser.Email,
 			IsVerified: true,
 			GitLabID:   &gitlabUser.ID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func HerokuLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetHerokuOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	client := oauthConfig.Client(context.Background(), oauthToken)
+
+	// Get user info from Heroku API
+	resp, err := client.Get("https://api.heroku.com/account")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Set required headers for Heroku API
+	resp.Request.Header.Set("Accept", "application/vnd.heroku+json; version=3")
+
+	var herokuUser struct {
+		ID    string `json:"id"`
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&herokuUser); err != nil {
+		return "", err
+	}
+
+	if herokuUser.Email == "" {
+		return "", errors.New("failed to get email from Heroku response")
+	}
+
+	user, err := repository.GetUserByHerokuID(herokuUser.ID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      herokuUser.Email,
+			IsVerified: true,
+			HerokuID:   &herokuUser.ID,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {
