@@ -122,6 +122,10 @@ func (h *Handler) GitLabOAuthConsentRedirect(w http.ResponseWriter, r *http.Requ
 	http.Redirect(w, r, services.GitLabOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) HerokuOAuthConsentRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, services.HerokuOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
+}
+
 func (h *Handler) AmazonLogin(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
