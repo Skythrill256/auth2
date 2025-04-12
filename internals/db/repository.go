@@ -22,10 +22,10 @@ func (repo *Repository) CreateUser(user *models.User) error {
 	}
 
 	// Insert into users table
-	query := `INSERT INTO users (email, password, is_verified, google_id, github_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`
+	query := `INSERT INTO users (email, password, is_verified, google_id, github_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id, foursquare_id) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`
 	err = tx.QueryRow(query, user.Email, user.Password, user.IsVerified,
-		user.GoogleID, user.GithubID, user.FacebookID, user.MicrosoftID, user.LinkedinID, user.AmazonID, user.BitbucketID).Scan(&user.ID)
+		user.GoogleID, user.GithubID, user.FacebookID, user.MicrosoftID, user.LinkedinID, user.AmazonID, user.BitbucketID, user.FoursquareID).Scan(&user.ID)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -161,8 +161,22 @@ func (repo *Repository) GetUserByAmazonID(amazonID string) (*models.User, error)
 
 func (repo *Repository) GetUserByBitbucketID(bitbucketID string) (*models.User, error) {
 	var user models.User
-	query := `SELECT id, email, password, is_verified, created_at, updated_at, google_id, github_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id FROM users WHERE bitbucket_id=$1`
-	err := repo.DB.QueryRow(query, bitbucketID).Scan(&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.GoogleID, &user.GithubID, &user.FacebookID, &user.MicrosoftID, &user.LinkedinID, &user.AmazonID, &user.BitbucketID)
+	query := `SELECT id, email, password, is_verified, created_at, updated_at, bitbucket_id FROM users WHERE bitbucket_id=$1`
+	err := repo.DB.QueryRow(query, bitbucketID).Scan(&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.BitbucketID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (repo *Repository) GetUserByFoursquareID(foursquareID string) (*models.User, error) {
+	var user models.User
+	query := `SELECT id, email, password, is_verified, created_at, updated_at, foursquare_id FROM users WHERE foursquare_id=$1`
+	err := repo.DB.QueryRow(query, foursquareID).Scan(&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.FoursquareID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

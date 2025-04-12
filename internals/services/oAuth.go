@@ -14,7 +14,9 @@ import (
 	"github.com/Skythrill256/auth-service/internals/utils"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/amazon"
+	"golang.org/x/oauth2/bitbucket"
 	"golang.org/x/oauth2/facebook"
+	"golang.org/x/oauth2/foursquare"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/linkedin"
@@ -51,6 +53,16 @@ func GetFacebookOAuthConfig(cfg *config.Config) *oauth2.Config {
 	}
 }
 
+func GetAmazonOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.AmazonClientID,
+		ClientSecret: cfg.AmazonClientSecret,
+		RedirectURL:  cfg.AmazonRedirectURL,
+		Scopes:       []string{"profile"}, // Basic profile information
+		Endpoint:     amazon.Endpoint,
+	}
+}
+
 func GetMicrosoftOAuthConfig(cfg *config.Config) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     cfg.MicrosoftClientID,
@@ -68,6 +80,26 @@ func GetLinkedinOAuthConfig(cfg *config.Config) *oauth2.Config {
 		RedirectURL:  cfg.LinkedInRedirectURL,
 		Scopes:       []string{"r_emailaddress", "r_liteprofile"},
 		Endpoint:     linkedin.Endpoint,
+	}
+}
+
+func GetBitbucketOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.BitbucketClientID,
+		ClientSecret: cfg.BitbucketClientSecret,
+		RedirectURL:  cfg.BitbucketRedirectURL,
+		Scopes:       []string{"account", "email"},
+		Endpoint:     bitbucket.Endpoint,
+	}
+}
+
+func GetFoursquareOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.FoursquareClientID,
+		ClientSecret: cfg.FoursquareClientSecret,
+		RedirectURL:  cfg.FoursquareRedirectURL,
+		Scopes:       []string{},
+		Endpoint:     foursquare.Endpoint,
 	}
 }
 
@@ -104,6 +136,74 @@ func AmazonOAuthConsentURL(cfg *config.Config) string {
 func BitbucketOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetBitbucketOAuthConfig(cfg)
 	return oauthConfig.AuthCodeURL("state")
+}
+
+func FoursquareLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetFoursquareOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	// Foursquare API v2 requires the OAuth token as a parameter
+	userInfoURL := fmt.Sprintf("https://api.foursquare.com/v2/users/self?oauth_token=%s&v=20231201", oauthToken.AccessToken)
+	resp, err := http.Get(userInfoURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var foursquareResponse struct {
+		Response struct {
+			User struct {
+				ID    string `json:"id"`
+				Email string `json:"contact,omitempty"`
+			} `json:"user"`
+		} `json:"response"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&foursquareResponse); err != nil {
+		return "", err
+	}
+
+	foursquareID := foursquareResponse.Response.User.ID
+	email := foursquareResponse.Response.User.Email
+
+	if foursquareID == "" {
+		return "", errors.New("failed to get Foursquare ID from response")
+	}
+
+	user, err := repository.GetUserByFoursquareID(foursquareID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:        email,
+			IsVerified:   true,
+			FoursquareID: &foursquareID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
 }
 
 func GoogleLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
@@ -399,16 +499,6 @@ func MicrosoftLogin(cfg *config.Config, repository *db.Repository, code string, 
 	return jwtToken, nil
 }
 
-func GetAmazonOAuthConfig(cfg *config.Config) *oauth2.Config {
-	return &oauth2.Config{
-		ClientID:     cfg.AmazonClientID,
-		ClientSecret: cfg.AmazonClientSecret,
-		RedirectURL:  cfg.AmazonRedirectURL,
-		Scopes:       []string{"profile"}, // Basic profile information
-		Endpoint:     amazon.Endpoint,
-	}
-}
-
 func AmazonLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetAmazonOAuthConfig(cfg)
 
@@ -470,19 +560,6 @@ func AmazonLogin(cfg *config.Config, repository *db.Repository, code string, ipA
 	}
 
 	return jwtToken, nil
-}
-
-func GetBitbucketOAuthConfig(cfg *config.Config) *oauth2.Config {
-	return &oauth2.Config{
-		ClientID:     cfg.BitbucketClientID,
-		ClientSecret: cfg.BitbucketClientSecret,
-		RedirectURL:  cfg.BitbucketRedirectURL,
-		Scopes:       []string{"account", "email"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://bitbucket.org/site/oauth2/authorize",
-			TokenURL: "https://bitbucket.org/site/oauth2/access_token",
-		},
-	}
 }
 
 func BitbucketLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
