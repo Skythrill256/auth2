@@ -21,6 +21,7 @@ import (
 	"golang.org/x/oauth2/gitlab"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/heroku"
+	"golang.org/x/oauth2/instagram"
 	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
 )
@@ -122,6 +123,16 @@ func GetHerokuOAuthConfig(cfg *config.Config) *oauth2.Config {
 		RedirectURL:  cfg.HerokuRedirectURL,
 		Scopes:       []string{"global"},
 		Endpoint:     heroku.Endpoint,
+	}
+}
+
+func GetInstagramOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.InstagramClientID,
+		ClientSecret: cfg.InstagramClientSecret,
+		RedirectURL:  cfg.InstagramRedirectURL,
+		Scopes:       []string{"basic"}, // Basic profile information
+		Endpoint:     instagram.Endpoint,
 	}
 }
 
@@ -878,6 +889,66 @@ func HerokuLogin(cfg *config.Config, repository *db.Repository, code string, ipA
 			Email:      herokuUser.Email,
 			IsVerified: true,
 			HerokuID:   &herokuUser.ID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func InstagramLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetInstagramOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	// Get user info from Instagram API
+	resp, err := http.Get(fmt.Sprintf("https://graph.instagram.com/me?fields=id,username&access_token=%s", oauthToken.AccessToken))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var instagramUser struct {
+		ID       string `json:"id"`
+		Username string `json:"username"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&instagramUser); err != nil {
+		return "", err
+	}
+
+	if instagramUser.ID == "" {
+		return "", errors.New("failed to get Instagram ID from response")
+	}
+
+	user, err := repository.GetUserByInstagramID(instagramUser.ID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:       instagramUser.Username + "@instagram.com",
+			IsVerified:  true,
+			InstagramID: &instagramUser.ID,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {

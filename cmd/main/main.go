@@ -65,6 +65,8 @@ func main() {
 	router.HandleFunc("/auth/heroku", handler.HerokuOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/heroku/callback", handler.HerokuLogin).Methods("GET")
 
+	router.HandleFunc("/auth/instagram/callback", handler.InstagramLogin).Methods("GET")
+
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
 
 	// Profile management routes with authentication middleware
