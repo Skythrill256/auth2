@@ -1,0 +1,4 @@
+# Add 'apertre2.0' label to any PR that mentions Apertre in its description
+apertre2.0:
+  - '(?i).*apertre\s*2\.?0?.*'
+  - '(?i).*apertre.*'
