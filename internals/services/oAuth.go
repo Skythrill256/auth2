@@ -252,6 +252,11 @@ func SpotifyOAuthConsentURL(cfg *config.Config) string {
 	return oauthConfig.AuthCodeURL("state")
 }
 
+func YahooOAuthConsentURL(cfg *config.Config) string {
+	oauthConfig := GetYahooOAuthConfig(cfg)
+	return oauthConfig.AuthCodeURL("state")
+}
+
 func FoursquareLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
 	oauthConfig := GetFoursquareOAuthConfig(cfg)
 

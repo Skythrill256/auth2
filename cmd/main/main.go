@@ -77,6 +77,7 @@ func main() {
 	router.HandleFunc("/auth/spotify", handler.SpotifyOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/spotify/callback", handler.SpotifyLogin).Methods("GET")
 
+	router.HandleFunc("/auth/yahoo", handler.YahooOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/yahoo/callback", handler.YahooLogin).Methods("GET")
 
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
