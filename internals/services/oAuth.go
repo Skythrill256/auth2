@@ -24,6 +24,7 @@ import (
 	"golang.org/x/oauth2/instagram"
 	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
+	"golang.org/x/oauth2/slack"
 )
 
 func GetGoogleOAuthConfig(cfg *config.Config) *oauth2.Config {
@@ -146,6 +147,16 @@ func GetJiraOAuthConfig(cfg *config.Config) *oauth2.Config {
 			AuthURL:  "https://auth.atlassian.com/authorize",
 			TokenURL: "https://auth.atlassian.com/oauth/token",
 		},
+	}
+}
+
+func GetSlackOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.SlackClientID,
+		ClientSecret: cfg.SlackClientSecret,
+		RedirectURL:  cfg.SlackRedirectURL,
+		Scopes:       []string{"identity.basic", "identity.email"},
+		Endpoint:     slack.Endpoint,
 	}
 }
 
@@ -1034,6 +1045,78 @@ func JiraLogin(cfg *config.Config, repository *db.Repository, code string, ipAdd
 			Email:      jiraUser.Email,
 			IsVerified: true,
 			JiraID:     &jiraUser.AccountID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func SlackLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetSlackOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	// Get user info from Slack API
+	resp, err := http.Get(fmt.Sprintf("https://slack.com/api/users.identity?token=%s", oauthToken.AccessToken))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var slackResponse struct {
+		OK   bool `json:"ok"`
+		User struct {
+			ID    string `json:"id"`
+			Email string `json:"email"`
+			Name  string `json:"name"`
+		} `json:"user"`
+		Team struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"team"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&slackResponse); err != nil {
+		return "", err
+	}
+
+	if !slackResponse.OK {
+		return "", errors.New("failed to get user info from Slack API")
+	}
+
+	if slackResponse.User.ID == "" {
+		return "", errors.New("failed to get Slack user ID from response")
+	}
+
+	user, err := repository.GetUserBySlackID(slackResponse.User.ID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      slackResponse.User.Email,
+			IsVerified: true,
+			SlackID:    &slackResponse.User.ID,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {

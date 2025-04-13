@@ -22,7 +22,8 @@ func RunMigrations(db *sql.DB) error {
         foursquare_id VARCHAR(255) UNIQUE,
         heroku_id VARCHAR(255) UNIQUE,
         instagram_id VARCHAR(255) UNIQUE,
-        jira_id VARCHAR(255) UNIQUE
+        jira_id VARCHAR(255) UNIQUE,
+        slack_id VARCHAR(255) UNIQUE
     )`
 
 	_, err := db.Exec(usersQuery)

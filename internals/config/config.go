@@ -56,6 +56,9 @@ type Config struct {
 	JiraClientID           string
 	JiraClientSecret       string
 	JiraRedirectURL        string
+	SlackClientID          string
+	SlackClientSecret      string
+	SlackRedirectURL       string
 }
 
 func LoadConfig() *Config {
@@ -113,5 +116,8 @@ func LoadConfig() *Config {
 		JiraClientID:           os.Getenv("JIRA_CLIENT_ID"),
 		JiraClientSecret:       os.Getenv("JIRA_CLIENT_SECRET"),
 		JiraRedirectURL:        os.Getenv("JIRA_REDIRECT_URL"),
+		SlackClientID:          os.Getenv("SLACK_CLIENT_ID"),
+		SlackClientSecret:      os.Getenv("SLACK_CLIENT_SECRET"),
+		SlackRedirectURL:       os.Getenv("SLACK_REDIRECT_URL"),
 	}
 }
