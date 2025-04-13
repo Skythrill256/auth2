@@ -160,6 +160,19 @@ func GetSlackOAuthConfig(cfg *config.Config) *oauth2.Config {
 	}
 }
 
+func GetSpotifyOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.SpotifyClientID,
+		ClientSecret: cfg.SpotifyClientSecret,
+		RedirectURL:  cfg.SpotifyRedirectURL,
+		Scopes:       []string{"user-read-email", "user-read-private"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://accounts.spotify.com/authorize",
+			TokenURL: "https://accounts.spotify.com/api/token",
+		},
+	}
+}
+
 func GoogleOAuthConsentURL(cfg *config.Config) string {
 	oauthConfig := GetGoogleOAuthConfig(cfg)
 	return oauthConfig.AuthCodeURL("state")
@@ -1122,6 +1135,74 @@ func SlackLogin(cfg *config.Config, repository *db.Repository, code string, ipAd
 			Email:      slackResponse.User.Email,
 			IsVerified: true,
 			SlackID:    &slackResponse.User.ID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func SpotifyLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetSpotifyOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	// Get user info from Spotify API
+	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me", nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Authorization", "Bearer "+oauthToken.AccessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var spotifyUser struct {
+		ID          string `json:"id"`
+		Email       string `json:"email"`
+		DisplayName string `json:"display_name"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&spotifyUser); err != nil {
+		return "", err
+	}
+
+	if spotifyUser.ID == "" {
+		return "", errors.New("failed to get Spotify ID from response")
+	}
+
+	user, err := repository.GetUserBySpotifyID(spotifyUser.ID)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      spotifyUser.Email,
+			IsVerified: true,
+			SpotifyID:  &spotifyUser.ID,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {
