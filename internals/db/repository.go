@@ -22,10 +22,10 @@ func (repo *Repository) CreateUser(user *models.User) error {
 	}
 
 	// Insert into users table
-	query := `INSERT INTO users (email, password, is_verified, google_id, github_id, gitlab_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id, foursquare_id, heroku_id, instagram_id, jira_id) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`
+	query := `INSERT INTO users (email, password, is_verified, google_id, github_id, gitlab_id, facebook_id, microsoft_id, linkedin_id, amazon_id, bitbucket_id, foursquare_id, heroku_id, instagram_id, jira_id, slack_id) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`
 	err = tx.QueryRow(query, user.Email, user.Password, user.IsVerified,
-		user.GoogleID, user.GithubID, user.GitLabID, user.FacebookID, user.MicrosoftID, user.LinkedinID, user.AmazonID, user.BitbucketID, user.FoursquareID, user.HerokuID, user.InstagramID, user.JiraID).Scan(&user.ID)
+		user.GoogleID, user.GithubID, user.GitLabID, user.FacebookID, user.MicrosoftID, user.LinkedinID, user.AmazonID, user.BitbucketID, user.FoursquareID, user.HerokuID, user.InstagramID, user.JiraID, user.SlackID).Scan(&user.ID)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -398,6 +398,22 @@ func (repo *Repository) GetUserByInstagramID(instagramID string) (*models.User, 
 
 	err := repo.DB.QueryRow(query, instagramID).Scan(
 		&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.InstagramID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (repo *Repository) GetUserBySlackID(slackID string) (*models.User, error) {
+	var user models.User
+	query := `SELECT id, email, password, is_verified, created_at, updated_at, slack_id
+	FROM users WHERE slack_id = $1`
+
+	err := repo.DB.QueryRow(query, slackID).Scan(
+		&user.ID, &user.Email, &user.Password, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt, &user.SlackID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
