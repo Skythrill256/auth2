@@ -166,9 +166,8 @@ Auth2 supports integration with multiple OAuth2 providers, including:
   <h3>Thank you for contributing to our repository</h3>
 
 <a href="https://github.com/Skythrill256/auth2/graphs/contributors">
-<img src="https://contributors-img.web.app/image?repo=https://github.com/Skythrill256/auth2"/>
-
-  </a>
+  <img src="https://contrib.rocks/image?repo=Skythrill256/auth2" />
+</a>
 
 <p style="font-family:var(--ff-philosopher);font-size:3rem;"><b> Show some <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> by starring this awesome repository!
 
