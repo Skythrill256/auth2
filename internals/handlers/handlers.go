@@ -134,6 +134,10 @@ func (h *Handler) JiraOAuthConsentRedirect(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, services.JiraOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) SlackOAuthConsentRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, services.SlackOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
+}
+
 func (h *Handler) AmazonLogin(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {

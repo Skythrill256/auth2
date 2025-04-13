@@ -71,6 +71,7 @@ func main() {
 	router.HandleFunc("/auth/jira", handler.JiraOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/jira/callback", handler.JiraLogin).Methods("GET")
 
+	router.HandleFunc("/auth/slack", handler.SlackOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/slack/callback", handler.SlackLogin).Methods("GET")
 
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
