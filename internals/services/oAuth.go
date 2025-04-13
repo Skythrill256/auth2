@@ -25,6 +25,8 @@ import (
 	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
 	"golang.org/x/oauth2/slack"
+	"golang.org/x/oauth2/spotify"
+	"golang.org/x/oauth2/yahoo"
 )
 
 func GetGoogleOAuthConfig(cfg *config.Config) *oauth2.Config {
@@ -166,10 +168,17 @@ func GetSpotifyOAuthConfig(cfg *config.Config) *oauth2.Config {
 		ClientSecret: cfg.SpotifyClientSecret,
 		RedirectURL:  cfg.SpotifyRedirectURL,
 		Scopes:       []string{"user-read-email", "user-read-private"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://accounts.spotify.com/authorize",
-			TokenURL: "https://accounts.spotify.com/api/token",
-		},
+		Endpoint:     spotify.Endpoint,
+	}
+}
+
+func GetYahooOAuthConfig(cfg *config.Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.YahooClientID,
+		ClientSecret: cfg.YahooClientSecret,
+		RedirectURL:  cfg.YahooRedirectURL,
+		Scopes:       []string{"openid", "email", "profile"},
+		Endpoint:     yahoo.Endpoint,
 	}
 }
 
@@ -1208,6 +1217,77 @@ func SpotifyLogin(cfg *config.Config, repository *db.Repository, code string, ip
 			Email:      spotifyUser.Email,
 			IsVerified: true,
 			SpotifyID:  &spotifyUser.ID,
+		}
+		err := repository.CreateUser(newUser)
+		if err != nil {
+			return "", err
+		}
+		user = newUser
+	}
+
+	// Log the login attempt
+	err = repository.CreateLoginRecord(user.ID, ipAddress)
+	if err != nil {
+		return "", err
+	}
+
+	jwtToken, err := utils.GenerateJWT(user.Email, cfg.JWTSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func YahooLogin(cfg *config.Config, repository *db.Repository, code string, ipAddress string) (string, error) {
+	oauthConfig := GetYahooOAuthConfig(cfg)
+
+	oauthToken, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return "", err
+	}
+
+	// Get user info from Yahoo API
+	req, err := http.NewRequest("GET", "https://api.login.yahoo.com/openid/v1/userinfo", nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Authorization", "Bearer "+oauthToken.AccessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var yahooUser struct {
+		Sub           string `json:"sub"`
+		Email         string `json:"email"`
+		Name          string `json:"name"`
+		FamilyName    string `json:"family_name"`
+		GivenName     string `json:"given_name"`
+		EmailVerified bool   `json:"email_verified"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&yahooUser); err != nil {
+		return "", err
+	}
+
+	if yahooUser.Sub == "" {
+		return "", errors.New("failed to get Yahoo ID from response")
+	}
+
+	user, err := repository.GetUserByYahooID(yahooUser.Sub)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		newUser := &models.User{
+			Email:      yahooUser.Email,
+			IsVerified: yahooUser.EmailVerified,
+			YahooID:    &yahooUser.Sub,
 		}
 		err := repository.CreateUser(newUser)
 		if err != nil {
