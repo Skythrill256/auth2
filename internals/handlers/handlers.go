@@ -334,6 +334,30 @@ func (h *Handler) SlackLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
+func (h *Handler) SpotifyLogin(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Code is required", http.StatusBadRequest)
+		return
+	}
+
+	ipAddress := r.Header.Get("X-Real-IP")
+	if ipAddress == "" {
+		ipAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if ipAddress == "" {
+		ipAddress = r.RemoteAddr
+	}
+
+	token, err := services.SpotifyLogin(h.Config, h.Repository, code, ipAddress)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
 func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {

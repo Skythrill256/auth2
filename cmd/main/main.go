@@ -74,6 +74,8 @@ func main() {
 	router.HandleFunc("/auth/slack", handler.SlackOAuthConsentRedirect).Methods("GET")
 	router.HandleFunc("/auth/slack/callback", handler.SlackLogin).Methods("GET")
 
+	router.HandleFunc("/auth/spotify/callback", handler.SpotifyLogin).Methods("GET")
+
 	router.HandleFunc("/get-user", handler.GetUserById).Methods("GET")
 
 	// Profile management routes with authentication middleware

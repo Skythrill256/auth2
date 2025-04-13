@@ -59,6 +59,9 @@ type Config struct {
 	SlackClientID          string
 	SlackClientSecret      string
 	SlackRedirectURL       string
+	SpotifyClientID        string
+	SpotifyClientSecret    string
+	SpotifyRedirectURL     string
 }
 
 func LoadConfig() *Config {
@@ -119,5 +122,8 @@ func LoadConfig() *Config {
 		SlackClientID:          os.Getenv("SLACK_CLIENT_ID"),
 		SlackClientSecret:      os.Getenv("SLACK_CLIENT_SECRET"),
 		SlackRedirectURL:       os.Getenv("SLACK_REDIRECT_URL"),
+		SpotifyClientID:        os.Getenv("SPOTIFY_CLIENT_ID"),
+		SpotifyClientSecret:    os.Getenv("SPOTIFY_CLIENT_SECRET"),
+		SpotifyRedirectURL:     os.Getenv("SPOTIFY_REDIRECT_URL"),
 	}
 }
