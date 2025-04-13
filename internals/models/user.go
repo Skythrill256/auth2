@@ -25,6 +25,7 @@ type User struct {
 	JiraID       *string   `json:"jira_id,omitempty"`
 	SlackID      *string   `json:"slack_id,omitempty"`
 	SpotifyID    *string   `json:"spotify_id,omitempty"`
+	YahooID      *string   `json:"yahoo_id,omitempty"`
 }
 
 type UserProfile struct {

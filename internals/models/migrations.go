@@ -24,7 +24,8 @@ func RunMigrations(db *sql.DB) error {
         instagram_id VARCHAR(255) UNIQUE,
         jira_id VARCHAR(255) UNIQUE,
         slack_id VARCHAR(255) UNIQUE,
-        spotify_id VARCHAR(255) UNIQUE
+        spotify_id VARCHAR(255) UNIQUE,
+        yahoo_id VARCHAR(255) UNIQUE
     )`
 
 	_, err := db.Exec(usersQuery)

@@ -62,6 +62,9 @@ type Config struct {
 	SpotifyClientID        string
 	SpotifyClientSecret    string
 	SpotifyRedirectURL     string
+	YahooClientID          string
+	YahooClientSecret      string
+	YahooRedirectURL       string
 }
 
 func LoadConfig() *Config {
@@ -125,5 +128,8 @@ func LoadConfig() *Config {
 		SpotifyClientID:        os.Getenv("SPOTIFY_CLIENT_ID"),
 		SpotifyClientSecret:    os.Getenv("SPOTIFY_CLIENT_SECRET"),
 		SpotifyRedirectURL:     os.Getenv("SPOTIFY_REDIRECT_URL"),
+		YahooClientID:          os.Getenv("YAHOO_CLIENT_ID"),
+		YahooClientSecret:      os.Getenv("YAHOO_CLIENT_SECRET"),
+		YahooRedirectURL:       os.Getenv("YAHOO_REDIRECT_URL"),
 	}
 }
