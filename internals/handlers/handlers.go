@@ -138,6 +138,10 @@ func (h *Handler) SlackOAuthConsentRedirect(w http.ResponseWriter, r *http.Reque
 	http.Redirect(w, r, services.SlackOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
 }
 
+func (h *Handler) SpotifyOAuthConsentRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, services.SpotifyOAuthConsentURL(h.Config), http.StatusTemporaryRedirect)
+}
+
 func (h *Handler) AmazonLogin(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
