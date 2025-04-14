@@ -71,23 +71,31 @@ Auth2 is a lightweight authentication system written in Go, designed to provide 
 
 ---
 
+
+
 ## 🔐 Supported OAuth Platforms
 
-Auth2 supports integration with multiple OAuth2 providers, including:
+<p style="font-family:var(--ff-philosopher);">Auth2 supports integration with the following OAuth2 providers:</p>
 
 <p>- Google</p>
-<p>- Facebook</p>
-<p>- LinkedIn</p>
-<p>- Azure Active Directory</p>
 <p>- GitHub</p>
+<p>- Facebook</p>
+<p>- Microsoft</p>
+<p>- LinkedIn</p>
+<p>- Amazon</p>
+<p>- Bitbucket</p>
+<p>- Foursquare</p>
 <p>- GitLab</p>
-<p>- Apple</p>
-<p>- Twitter</p>
+<p>- Heroku</p>
+<p>- Instagram</p>
+<p>- Jira</p>
 
 <br>
-<p>These providers are commonly used for OAuth2 authentication and are supported by many systems.</p>
+<p>These providers are supported through dedicated OAuth2 routes and are ready to be used in authentication flows.</p>
 
 <br><br>
+
+
 
 ---
 
